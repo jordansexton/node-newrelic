@@ -1,3 +1,99 @@
+### v1.22.0 (2015-08-20):
+
+* Errors will now respect its transaction's ignore state.
+
+  When ignoring transactions, related errors will now also be ignored.
+
+* The agent can now handle immutable and frozen error objects.
+
+  In rare cases the agent gets passed an immutable error object. The
+  agent would then crash when trying to tag the error object with the
+  current transaction. We now handle these errors properly.
+
+### v1.21.2 (2015-08-06):
+
+* Corrected a defect in the handling of uncaught exceptions
+
+  This defect was surfaced in versions of node that did not have
+  `process._fatalException`, namely v0.8. When an uncaught exception
+  occurs, the agent now records the error and passes it along to the other
+  uncaught exception handlers that have been registered.  This was
+  inverted before, passing along errors when there were no other error
+  handlers present and rethrowing otherwise.
+
+### v1.21.1 (2015-07-13):
+
+* Moved `concat-stream` from dev dependencies to production dependencies.
+
+  Last week we released v1.21.0 but forgot to move a dependency. We've
+  removed v1.21.0 from npmjs.org and this release contains the changes
+  from that version.
+
+### v1.21.0 (2015-07-10):
+
+* Added configurable host names.
+
+  The agent now has configuration settings to allow configuration of
+  custom host names. Set `process_host.display_name` to enable this.
+
+  If this conifig is not set, the agent will continue to use the host
+  name found through an `os.hostname()` call. Should this lookup fail
+  somehow, `process_host.ipv_preference` can now be set to `4` or `6`
+  to configure the type of ip address displayed in place of the host
+  name.
+
+
+
+### v1.20.2 (2015-06-23):
+
+* Fixed a bug where custom events weren't being sent.
+
+  In a refactor of our data collection cycle, we omited the custom
+  events from the list of commands, this is now fixed.
+
+* Fixed a very rare bug where the custom event pool could be set to 10
+  instead of the user config value. This patch was contributed by
+  [shezarkhani](https://github.com/shezarkhani), thanks!
+
+  This case would only be hit if you disabled custom events via server
+  sent config while there were custom events ready to be sent. Then
+  you later reenabled it via server sent config. It would only occur
+  for one data collection cycle then reset back to the correct size.
+
+
+
+### v1.20.1 (2015-06-11):
+
+* Fixed a bug in custom event recording limits.
+
+  Previously, the agent would use the config value for max events
+  (default of 1000) for the first harvest of custom events, then would
+  use an internal default for the reservoir with max of 10 events for
+  each harvest after that, resulting in less than the expected number
+  of events being sent.
+
+* Exposed the `custom_insights_events` settings in the user config.
+
+  You can now set `custom_insights_events.enabled` and
+  `custom_insights_events.max_samples_stored` in your `newrelic.js`.
+
+  Read more about these settings in our
+  [documentation](https://docs.newrelic.com/docs/agents/nodejs-agent/installation-configuration/nodejs-agent-configuration#custom_events).
+
+### v1.20.0 (2015-06-05):
+
+* Triaged a defect in native promise instrumentation
+
+  Transactions used to be lost acrossed chained `.then` calls.  The way
+  promises are wrapped has been changed to fix this issue.
+
+* Added support for Slow Queries
+
+  Slow Query information will now appear in the UI for Node agent users.
+  This feature allows you to see a trace for slow datastore queries.
+  Read more about this feature in our
+  [documentation](https://docs.newrelic.com/docs/apm/applications-menu/monitoring/viewing-slow-query-details)
+  
 ### v1.19.2 (2015-05-21):
 
 * Fixed an issue with Error tracing

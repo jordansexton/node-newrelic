@@ -1,6 +1,6 @@
 {
   "name": "newrelic",
-  "version": "1.19.2",
+  "version": "1.22.0",
   "author": "New Relic Node.js agent team <nodejs@newrelic.com>",
   "licenses": [
     {
@@ -48,6 +48,11 @@
       "name": "Wilson Bilkovich",
       "email": "wbilkovich@newrelic.com",
       "web": "https://newrelic.com"
+    },
+    {
+      "name": "Jonathan Merrill",
+      "email": "jmerrill@newrelic.com",
+      "web": "https://newrelic.com"
     }
   ],
   "description": "New Relic agent",
@@ -70,57 +75,25 @@
     "test": "make test"
   },
   "dependencies": {
-    "json-stringify-safe": "^5.0.0",
+    "concat-stream": "^1.5.0",
     "https-proxy-agent": "^0.3.5",
+    "json-stringify-safe": "^5.0.0",
+    "readable-stream": "^1.1.13",
     "semver": "^4.2.0",
-    "yakaa": "^1.0.1",
-    "readable-stream": "^1.1.13"
+    "yakaa": "^1.0.1"
   },
   "bundledDependencies": [
-    "json-stringify-safe",
+    "concat-stream",
     "https-proxy-agent",
+    "json-stringify-safe",
+    "readable-stream",
     "semver",
-    "yakaa",
-    "readable-stream"
+    "yakaa"
   ],
   "devDependencies": {
-    "JSV": "~4.0.2",
-    "architect": "*",
-    "async": "*",
-    "carrier": "*",
-    "chai": "^1.10.0",
-    "concat-stream": "^1.4.7",
-    "connect": "*",
-    "cover": "*",
-    "express": "*",
-    "express-enrouten": "^1.1.1",
-    "generic-pool": "*",
-    "glob": "~3.2.9",
-    "hapi": "*",
-    "memcached": ">=0.2.8",
-    "mkdirp": "*",
     "mocha": "*",
-    "mongodb": "*",
-    "mysql": "*",
-    "nave": "*",
-    "nock": "0.31.2",
-    "node-cassandra-cql": "^0.5.0",
-    "npm-license": "*",
-    "pg.js": "^3.4.1",
-    "proxy": "^0.2.3",
-    "q": "*",
-    "qx": "*",
-    "redis": "*",
-    "request": "*",
-    "restify": "~2.6.3",
-    "sequelize": "*",
-    "should": "*",
-    "sinon": "*",
-    "split": "*",
-    "tap": "^0.7.1",
-    "temp": "^0.8.1",
-    "through": "^2.3.6",
-    "wrench": "*"
+    "tap": "0.7.1",
+    "eslint": "^0.24.1"
   },
   "repository": {
     "type": "git",
