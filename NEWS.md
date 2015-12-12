@@ -1,3 +1,42 @@
+### v1.24.0 (2015-11-18):
+
+* Advanced Analytics for APM Errors
+
+  With this release, the agent reports [TransactionError events](https://docs.newrelic.com/docs/insights/new-relic-insights/decorating-events/error-event-default-attributes-insights). These new events power the beta feature [Advanced Analytics for APM Errors](https://docs.newrelic.com/docs/apm/applications-menu/events/view-apm-errors-error-traces) (apply [here](https://discuss.newrelic.com/t/join-the-apm-errors-beta-of-real-time-analytics/31123) to participate). The error events are also available today through [New Relic Insights](http://newrelic.com/insights).
+
+  Advanced Analytics for APM Errors lets you see all of your errors with
+  granular detail, filter and group by any attribute to analyze them, and take
+  action to resolve issues through collaboration.
+
+* `NEW_RELIC_LOG_ENABLED` environment variable is now treated as a boolean.
+
+  Previously, this option was treated as a string, causing it to not work for
+  some use cases. Thanks to @jakecraige for contributing this fix!
+
+### v1.23.1 (2015-11-05):
+
+* `newrelic.getBrowserTimingHeader()` API now includes the full transaction name.
+
+  Previously, the agent would use a fragment of the transaction name, causing
+  Browser Monitoring transactions and APM transactions to not be cross linked.
+  This change makes the cross linking work correctly.
+
+### v1.23.0 (2015-10-29):
+
+* The New Relic Node Agent now officially supports Node v4!
+
+  We are excited to announce that the New Relic Node Agent officially supports
+  Node v4.x!  We've tested the agent across all major versions of Node used by New
+  Relic customers to ensure a quality Node APM experience.  New Relic recommends
+  upgrading to Node v4.x for best Node Agent performance.
+
+* Corrected a parsing issue in the slow sql query parsing step.
+
+  Previously, the agent would not be able to parse inputs to database libraries
+  that specified sql as an option param. This was an issue with node-mysql,
+  namely. The agent now correctly handles this case and registers the queries as
+  expected.
+
 ### v1.22.2 (2015-10-14):
 
 * Removed client support of the RC4 stream cipher for communicating with the New
