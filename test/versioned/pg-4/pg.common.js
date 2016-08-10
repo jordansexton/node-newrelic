@@ -3,6 +3,7 @@
 var tap = require('tap')
 var params = require('../../lib/params')
 var helper = require('../../lib/agent_helper')
+var findSegment = require('../../lib/metrics_helper').findSegment
 var test = tap.test
 
 
@@ -119,7 +120,7 @@ module.exports = function runTests(agent, pg, name) {
   }
 
   test('Postgres instrumentation: ' + name, function (t) {
-    t.plan(5)
+    t.plan(7)
     postgresSetup(runTest)
     function runTest () {
       t.test('simple query with prepared statement', function (t) {
@@ -299,6 +300,47 @@ module.exports = function runTests(agent, pg, name) {
         })
       })
 
+      // https://github.com/newrelic/node-newrelic/pull/223
+      t.test("query using an config object with `text` getter instead of property",
+          function (t) {
+
+        var client = new pg.Client(CON_STRING)
+        helper.runInTransaction(agent, function transactionInScope(tx) {
+          var transaction = agent.getTransaction()
+
+          var colVal = 'Sianara'
+          var pkVal = 444
+
+          function CustomConfigClass() {
+            this._text = 'INSERT INTO ' + TABLE + ' (' + PK + ',' +  COL
+            this._text += ') VALUES($1, $2);'
+          }
+
+          // "text" is defined as a getter on the prototype, so it will not be
+          // a property owned by the instance
+          Object.defineProperty(CustomConfigClass.prototype, 'text', {
+            get: function() {
+              return this._text
+            }
+          })
+
+          // create a config instance
+          var config = new CustomConfigClass()
+
+          client.connect(function (error) {
+            if (error) return t.fail(error)
+            var query = client.query(config, [pkVal, colVal], function (error, value) {
+              var segment = findSegment(transaction.trace.root,
+                'Datastore/statement/Postgres/testTable/insert')
+              t.ok(segment, 'expected segment exists')
+
+              client.end()
+              t.end()
+            })
+          })
+        })
+      })
+
       t.test('query.on should still be chainable', function (t) {
         var client = new pg.Client(CON_STRING)
 
@@ -312,6 +354,33 @@ module.exports = function runTests(agent, pg, name) {
           }).on('end', function ended() {
             client.end()
             t.end()
+          })
+        })
+      })
+
+      t.test('query.on should not create segments for row events', function (t) {
+        helper.runInTransaction(agent, function transactionInScope(tx) {
+          var client = new pg.Client(CON_STRING)
+
+          client.connect(function (error) {
+            if (error) return t.fail(error)
+            var query = client.query('SELECT table_name FROM information_schema.tables')
+
+            query.on('error', function(err) {
+              t.error(err, 'error while querying')
+              t.end()
+            })
+
+            query.on('row', function onRow(row) {})
+
+            query.on('end', function ended() {
+              var segment = findSegment(tx.trace.root,
+                'Datastore/statement/Postgres/information_schema.tables/select')
+
+              t.equal(segment.children.length, 1)
+              client.end()
+              t.end()
+            })
           })
         })
       })

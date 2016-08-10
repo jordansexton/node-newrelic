@@ -1,20 +1,69 @@
+### v1.29.0 (2016-08-03):
+
+* Reworked the SQL parser to handle new lines in the query.
+
+  Previously the agent would have difficulty classifying queries with new lines
+  in them.  Thanks to Libin Lu (@evollu) for the fix!
+
+* Postgres instrumentation is now compatible with inputs with text getter attributes.
+
+  Thanks again to Libin Lu (@evollu) for the fix!
+
+* Domain error handlers will now be scoped to the transaction the error occurred in.
+
+  Previously, the `'error'` event handlers would not be scoped to a transaction causing
+  our API methods to not associate data correctly (e.g. using `noticeError`
+  would not associate the error with the transaction and would instead be
+  unscoped).
+
+### v1.28.3 (2016-07-13):
+
+* Removed excessive segment creation from PG instrumentation.
+
+  For queries with many results we would create a segment for each result. This
+  would result in excessive object allocation and then cause harsh GC thrashing.
+
+* Improved agent startup speed by ~10% by simplifying environment checks.
+
+  Removed prolific `fs.exists` and `fs.stat` checks, instead simply handling the
+  error for mis-used files which greatly reduces disk access.
+
+* Fixed a bug in agent connect that could cause an identity crisis under
+  specific use cases.
+
+  When using the agent with multiple app names, transaction information could be
+  misattributed to other services if they share the same first app name. This
+  resolves that by using all of the host names to uniquely identify the agent.
+
+* Added slightly more trace-level logging around the creation of segments.
+
+* Added examples for using the `newrelic.createBackgroundTransaction` method in
+  a number of different use cases.
+
+
 ### v1.28.2 (2016-07-07):
 
 * Director instrumentation that will now name the transaction correctly,
   as well as create segments corresponding to the handlers registered
   with director.
 
-* Transaction naming refactor - this should clear up some inconsistent naming issues in our router instrumentations.
+* Transaction naming refactor - this should clear up some inconsistent naming
+  issues in our router instrumentations.
 
-  Previously the instrumentation was tasked with the maintenance of the transaction state name, now this has been abstracted into its own class to be used by instrumentations.
+  Previously the instrumentation was tasked with the maintenance of the
+  transaction state name, now this has been abstracted into its own class to be
+  used by instrumentations.
 
-* Express instrumentation refactored to scope transaction storage to the incoming request object.
+* Express instrumentation refactored to scope transaction storage to the
+  incoming request object.
 
-  Previously the express instrumentation used a stack to track which router was expecting middleware to finish and keep track of which transaction is being executed.
-  The new implementation has a stronger guarantee on scoping work to the correct transaction.
+  Previously the express instrumentation used a stack to track which router was
+  expecting middleware to finish and keep track of which transaction is being
+  executed. The new implementation has a stronger guarantee on scoping work to
+  the correct transaction.
 
-* The agent now uses the correct units for slow queries - this fixes and
-  issue where query traces in the databases tab were slower than the reported maximum.
+* The agent now uses the correct units for slow queries - this fixes and issue
+  where query traces in the databases tab were slower than the reported maximum.
 
 
 ### v1.28.1 (2016-06-15):
