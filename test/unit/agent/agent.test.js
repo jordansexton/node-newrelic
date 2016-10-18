@@ -14,6 +14,13 @@ var Transaction = require('../../../lib/transaction')
 var clearAWSCache = require('../../../lib/aws-info').clearCache
 
 
+// XXX Remove this when deprecating Node v0.8.
+if (!global.setImmediate) {
+  global.setImmediate = function(fn) {
+    global.setTimeout(fn, 0)
+  }
+}
+
 /*
  *
  * CONSTANTS
@@ -234,27 +241,27 @@ describe("the New Relic agent", function () {
               done()
             })
           })
-
         })
       })
     })
 
-    describe("with naming rules configured", function () {
+    describe("with naming rules configured", function() {
       var configured
-      beforeEach(function () {
+      beforeEach(function() {
         var config = configurator.initialize({
           rules : {name : [
-            {pattern : '^/t',  name : 'u'},
-            {pattern : /^\/u/, name : 't'}
+            {pattern: '^/t',  name: 'u'},
+            {pattern: /^\/u/, name: 't'}
           ]}
         })
         configured = new Agent(config)
       })
 
-      it("loads the rules", function () {
+      it("loads the rules", function() {
         var rules = configured.userNormalizer.rules
         expect(rules.length).equal(2)
-        // because of unshift, rules are in reverse of config order
+
+        // Rules are reversed by default
         expect(rules[0].pattern.source).equal('^\\/u')
 
         if (semver.satisfies(process.versions.node, '>=1.0.0')) {
@@ -265,10 +272,10 @@ describe("the New Relic agent", function () {
       })
     })
 
-    describe("with ignoring rules configured", function () {
+    describe("with ignoring rules configured", function() {
       var configured
 
-      beforeEach(function () {
+      beforeEach(function() {
         var config = configurator.initialize({
           rules : {ignore : [
             /^\/ham_snadwich\/ignore/
@@ -277,7 +284,7 @@ describe("the New Relic agent", function () {
         configured = new Agent(config)
       })
 
-      it("loads the rules", function () {
+      it("loads the rules", function() {
         var rules = configured.userNormalizer.rules
         expect(rules.length).equal(1)
         expect(rules[0].pattern.source).equal('^\\/ham_snadwich\\/ignore')
@@ -285,7 +292,7 @@ describe("the New Relic agent", function () {
       })
     })
 
-    describe("when forcing transaction ignore status", function () {
+    describe("when forcing transaction ignore status", function() {
       var agent
 
       beforeEach(function () {
@@ -1226,8 +1233,6 @@ describe("the New Relic agent", function () {
         nock(URL)
           .post(helper.generateCollectorPath('sql_trace_data', RUN_ID))
           .reply(200, {return_value : null})
-
-
 
       agent.harvest(function cb_harvest(error) {
         should.not.exist(error)
