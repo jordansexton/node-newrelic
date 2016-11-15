@@ -192,6 +192,35 @@ API.prototype.addCustomParameter = function addCustomParameter(name, value) {
 }
 
 /**
+ * Adds all custom parameters in an object to the current transaction.
+ *
+ * See documentation for newrelic.addCustomParameter for more information on
+ * setting custom parameters.
+ *
+ * An example of setting a custom parameter object:
+ *
+ *    newrelic.addCustomParameters({test: 'value', test2: 'value2'});
+ *
+ * @param {object} [params]
+ * @param {string} [params.KEY] The name you want displayed in the RPM UI.
+ * @param {string} [params.KEY.VALUE] The value you want displayed. Must be serializable.
+ */
+API.prototype.addCustomParameters = function addCustomParameters(params) {
+  var metric = this.agent.metrics.getOrCreateMetric(
+    NAMES.SUPPORTABILITY.API + '/addCustomParameters'
+  )
+  metric.incrementCallCount()
+
+  for (var key in params) {
+    if (!params.hasOwnProperty(key)) {
+      continue
+    }
+
+    this.addCustomParameter(key, params[key])
+  }
+}
+
+/**
  * Tell the tracer whether to ignore the current transaction. The most common
  * use for this will be to mark a transaction as ignored (maybe it's handling
  * a websocket polling channel, or maybe it's an external call you don't care
@@ -820,6 +849,8 @@ API.prototype.recordCustomEvent = function recordCustomEvent(eventType, attribut
  * @param {boolean} [options.collectPendingData=false]  If true, the agent will send any
  *                                                      pending data to the collector
  *                                                      before shutting down.
+ * @param {number}  [options.timeout]                   time in ms to wait before
+ *                                                      shutting down
  * @param {function} [callback]                         callback function that runs when
  *                                                      agent stopped
  */
@@ -839,19 +870,51 @@ API.prototype.shutdown = function shutdown(options, cb) {
   }
 
   var agent = this.agent
-  if (options && options.collectPendingData) {
-    agent.harvest(function cb_harvest(error) {
-      if (error) {
-        logger.error(error, 'An error occurred while running last harvest' +
-          ' before shutdown.')
+
+  function cb_harvest(error) {
+    if (error) {
+      logger.error(
+        error,
+        'An error occurred while running last harvest before shutdown.'
+      )
+    }
+    agent.stop(callback)
+  }
+
+  if (options && options.collectPendingData && agent._state !== 'started') {
+    if (typeof options.timeout === 'number') {
+      var shutdownTimeout = setTimeout(function shutdownTimeout() {
+        agent.stop(callback)
+      }, options.timeout)
+      // timer.unref only in 0.9+
+      if (shutdownTimeout.unref) {
+        shutdownTimeout.unref()
       }
-      agent.stop(callback)
+    } else if (options.timeout) {
+      logger.warn(
+        'options.timeout should be of type "number". Got %s',
+        typeof options.timeout
+      )
+    }
+
+    agent.on('started', function shutdownHarvest() {
+      agent.harvest(cb_harvest)
     })
+    agent.on('errored', function logShutdownError(error) {
+      agent.stop(callback)
+      if (error) {
+        logger.error(
+          error,
+          'The agent encountered an error after calling shutdown.'
+        )
+      }
+    })
+  } else if (options && options.collectPendingData) {
+    agent.harvest(cb_harvest)
   } else {
     agent.stop(callback)
   }
 }
-
 
 function _checkKeyLength(object, maxLength) {
   var keys = Object.keys(object)

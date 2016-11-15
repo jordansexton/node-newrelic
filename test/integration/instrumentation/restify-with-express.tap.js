@@ -4,10 +4,12 @@ var tap     = require('tap')
 var test    = tap.test
 var request = require('request')
 var helper  = require('../../lib/agent_helper')
+var semver = require('semver')
 
 
 test("agent instrumentation of restify shouldn't affect express query parsing middleware",
-     function(t) {
+  {skip: semver.satisfies(process.version, '0.8')},
+  function(t) {
   t.plan(2)
 
   var agent   = helper.instrumentMockedAgent()

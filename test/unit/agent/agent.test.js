@@ -127,7 +127,7 @@ describe("the New Relic agent", function () {
     })
 
     it("requires a valid value when changing state", function () {
-      expect(function () { agent.state('bogus'); }).throws('Invalid state bogus')
+      expect(function () { agent.setState('bogus'); }).throws('Invalid state bogus')
     })
 
     it("has some debugging configuration by default", function () {
@@ -259,15 +259,15 @@ describe("the New Relic agent", function () {
 
       it("loads the rules", function() {
         var rules = configured.userNormalizer.rules
-        expect(rules.length).equal(2)
+        expect(rules.length).equal(2 + 1) // +1 default ignore rule
 
         // Rules are reversed by default
-        expect(rules[0].pattern.source).equal('^\\/u')
+        expect(rules[1].pattern.source).equal('^\\/u')
 
         if (semver.satisfies(process.versions.node, '>=1.0.0')) {
-            expect(rules[1].pattern.source).equal('^\\/t')
+            expect(rules[2].pattern.source).equal('^\\/t')
         } else {
-            expect(rules[1].pattern.source).equal('^/t')
+            expect(rules[2].pattern.source).equal('^/t')
         }
       })
     })
@@ -320,6 +320,13 @@ describe("the New Relic agent", function () {
         expect(transaction.ignore).equal(false)
 
         expect(function () { transaction.end(); }).not.throws()
+      })
+
+      it("should ignore when setName is not called", function() {
+        var transaction = new Transaction(agent)
+        transaction.forceIgnore = true
+        agent._transactionFinished(transaction)
+        expect(transaction.ignore).equal(true)
       })
     })
 

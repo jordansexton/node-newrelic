@@ -1,3 +1,64 @@
+### v1.34.0 (2016-11-10):
+
+* The agent now collects CPU metrics when running under Node 6.1.0 and higher.
+
+  Node 6.1.0 introduced an API to get CPU time usage of the running Node process.
+  We are now collecting this data as new metrics.
+
+* The agent now has a separate configuration for audit logging.
+
+  Previously the data that the agent sends to the collector was logged only in trace
+  logging mode, making the logs unnecessarily large and noisy.  The agent can now include
+  this data independent of the logging level using separate configuration settings.
+
+* A new API method addCustomParameters() has been added to allow adding multiple custom
+  parameters at once.  Thanks to Austin Peterson (@AKPWebDesign) for this contribution!
+
+* The shutdown() API now waits for connection to collect pending data.
+
+  When a flag to collect pending data is provided to the shutdown() method, the agent now
+  ensures a connection to the collector has been established.  This is useful when
+  the Node process is short-lived, such as in AWS Lambda.
+
+* Updated tests to run on Node 7.
+
+  Node 7 is officially supported as of the previous release, v1.33.0.
+
+* The setIgnoreTransaction() API now works for background transactions.
+
+* Fixed issue with Synthetics result not displaying a link to the corresponding
+  transaction trace.
+
+* Added running the nsp (Node Security Platform) tool to the test suite to help with
+  detecting security-related vulnerabilities.
+
+### v1.33.0 (2016-10-31):
+
+* The agent now collects database instance information for Memcached operations.
+  This information (database server and database name) is displayed in transaction
+  traces and slow query traces.
+
+* socket.io long-polling requests are now ignored by default.
+
+  Collecting metrics for these requests is typically not desirable since they are
+  frequent and do not represent business transactions.  Previously we recommended adding
+  an ignore rule manually.  Now it is included by default.
+
+* Improved test coverage for Postgres and MongoDB instrumentations.
+
+### v1.32.0 (2016-10-20):
+
+* The agent now collects database instance information for MySQL and MongoDB
+  operations. This information (database server and database name) is displayed in
+  transaction traces and slow query traces.
+
+* Datastore instance configuration can now be done through environment
+  variables.  These can be set through `NEW_RELIC_DATASTORE_INSTANCE_REPORTING_ENABLED`
+  and `NEW_RELIC_DATASTORE_DATABASE_NAME_REPORTING_ENABLED`
+
+* The agent will no longer crash the process when an express param handler is
+  executed when a transaction is not active.
+
 ### v1.31.0 (2016-10-12):
 
 * The agent now collects database instance information for PostgreSQL and Redis
