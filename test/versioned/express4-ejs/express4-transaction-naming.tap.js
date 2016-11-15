@@ -1,6 +1,5 @@
 'use strict'
 
-var path = require('path')
 var helper = require('../../lib/agent_helper.js')
 var http = require('http')
 var skip = require('./skip')
@@ -20,30 +19,31 @@ runTests({
 })
 
 function runTests(flags) {
-  test("transaction name with single route",
-      function (t) {
+  test("transaction name with single route", function(t) {
     setup(t)
 
-    app.get('/path1', function(req, res, next){
+    app.get('/path1', function(req, res) {
       res.end()
     })
 
     runTest(t, '/path1', '/path1')
   })
 
-  test("transaction name with no matched routes",
-      function (t) {
+  test("transaction name with no matched routes", function(t) {
     setup(t)
 
-    app.get('/path1', function(req, res, next){
+    app.get('/path1', function(req, res) {
       res.end()
     })
 
     var endpoint = '/asdf'
 
-    agent.on('transactionFinished', function (transaction) {
-      t.equal(transaction.name, 'WebTransaction/NormalizedUri/*',
-        "transaction has expected name")
+    agent.on('transactionFinished', function(transaction) {
+      t.equal(
+        transaction.name,
+        'WebTransaction/Expressjs/GET//',
+        'transaction has expected name'
+      )
       t.end()
     })
     var server = app.listen(function() {
@@ -54,8 +54,7 @@ function runTests(flags) {
     })
   })
 
-  test("transaction name with route that has multiple handlers",
-      function (t) {
+  test("transaction name with route that has multiple handlers", function(t) {
     setup(t)
 
     app.get('/path1', function(req, res, next){
@@ -102,7 +101,7 @@ function runTests(flags) {
 
     var subapp = express()
 
-    subapp.get('/path1', function(req, res, next){
+    subapp.get('/path1', function middleware(req, res, next){
       res.end()
     })
 
@@ -202,7 +201,7 @@ function runTests(flags) {
 
     app.use('/router1', router)
 
-    app.use(function(err, req, res, next) {
+    app.use(function errorHandler(err, req, res, next) {
       return res.status(500).end()
     })
 
@@ -309,6 +308,45 @@ function runTests(flags) {
       for (var i = 0; i < numTests; i++) {
         runner(server)
       }
+    })
+  })
+
+  test('names transaction when request is aborted', function(t) {
+    t.plan(4)
+    setup(t)
+
+    app.get('/test', function(req, res, next) {
+      t.ok(agent.getTransaction(), 'transaction exists')
+      // generate error after client has aborted
+      setTimeout(function() {
+        t.ok(agent.getTransaction() == null, 'transaction has already ended')
+        next(new Error('some error'))
+      }, 20)
+    })
+
+    app.use(function(error, req, res, next) {
+      t.ok(agent.getTransaction() == null, 'no active transaction when responding')
+      res.end()
+    })
+
+    var server = app.listen(function() {
+      var port = server.address().port
+      var req = http.request({port: port, path: '/test'}, function() {})
+      req.end()
+      // add error handler, otherwise aborting will cause an exception
+      req.on('error', function() {})
+
+      setTimeout(function() {
+        req.abort()
+      }, 10)
+    })
+
+    agent.on('transactionFinished', function(tx) {
+      t.equal(tx.name, 'WebTransaction/Expressjs/GET//test')
+    })
+
+    t.tearDown(function cb_tearDown() {
+      server.close()
     })
   })
 
